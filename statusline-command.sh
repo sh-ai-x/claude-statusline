@@ -20,12 +20,13 @@ magenta='\033[0;35m'
 dim='\033[2;90m'
 reset='\033[0m'
 
-effort=$(echo "$input" | jq -r '.effort // empty')
+effort=$(echo "$input" | jq -r '.effort.level // empty')
 if [ -n "$effort" ]; then
   case "$effort" in
     low)    effort_color='\033[2;37m' ;;
     medium) effort_color='\033[0;36m' ;;
     high)   effort_color='\033[1;33m' ;;
+    xhigh)  effort_color='\033[1;33m' ;;
     max)    effort_color='\033[1;35m' ;;
     *)      effort_color="$dim" ;;
   esac
