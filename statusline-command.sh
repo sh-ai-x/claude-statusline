@@ -17,7 +17,22 @@ blue='\033[1;34m'
 red='\033[0;31m'
 yellow='\033[0;33m'
 magenta='\033[0;35m'
+dim='\033[2;90m'
 reset='\033[0m'
+
+effort=$(echo "$input" | jq -r '.effort // empty')
+if [ -n "$effort" ]; then
+  case "$effort" in
+    low)    effort_color='\033[2;37m' ;;
+    medium) effort_color='\033[0;36m' ;;
+    high)   effort_color='\033[1;33m' ;;
+    max)    effort_color='\033[1;35m' ;;
+    *)      effort_color="$dim" ;;
+  esac
+  effort_str=" ${effort_color}effort:${effort}${reset}"
+else
+  effort_str=""
+fi
 
 # Git branch
 git_branch=$(git -C "$cwd" -c gc.auto=0 symbolic-ref --short HEAD 2>/dev/null)
@@ -64,4 +79,4 @@ fi
 lang_color="$yellow"
 
 # Single line: model | dir | git | context bar | time | rate limit | en:on/off
-echo -e "${magenta}[${model}]${reset} ${cyan}${dir}${reset}${git_info} ${ctx_color}${bar}${reset} ${pct}% | ⏱ ${mins}m ${secs}s${rate_str} | ${lang_color}en:${lang_mode}${reset}"
+echo -e "${magenta}[${model}]${reset} ${cyan}${dir}${reset}${git_info} ${ctx_color}${bar}${reset} ${pct}%${effort_str} | ⏱ ${mins}m ${secs}s${rate_str} | ${lang_color}en:${lang_mode}${reset}"
