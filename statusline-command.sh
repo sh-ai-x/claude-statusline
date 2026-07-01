@@ -3,6 +3,8 @@ input=$(cat)
 
 lang_mode=$(cat "$HOME/.claude/.lang-mode" 2>/dev/null || echo "off")
 
+gh_user=$(awk -F': *' '/^    user:/{print $2; exit}' "$HOME/.config/gh/hosts.yml" 2>/dev/null)
+
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // empty')
 dir=$(basename "$cwd")
 model=$(echo "$input" | jq -r '.model.display_name // "Claude"')
@@ -79,5 +81,14 @@ fi
 # Lang mode indicator: yellow always
 lang_color="$yellow"
 
-# Single line: model | dir | git | context bar | time | rate limit | en:on/off
-echo -e "${magenta}[${model}]${reset} ${cyan}${dir}${reset}${git_info} ${ctx_color}${bar}${reset} ${pct}%${effort_str} | ⏱ ${mins}m ${secs}s${rate_str} | ${lang_color}en:${lang_mode}${reset}"
+account_color='\033[1;37m'
+account_str=""
+[ -n "$gh_user" ] && account_str="${account_color}@${gh_user}${reset} "
+
+# Line 1: account | model | dir | git | context bar
+line1="${account_str}${magenta}[${model}]${reset} ${cyan}${dir}${reset}${git_info} ${ctx_color}${bar}${reset} ${pct}%"
+
+# Line 2: time | rate limit | en:on/off | effort
+line2="⏱ ${mins}m ${secs}s${rate_str} | ${lang_color}en:${lang_mode}${reset}${effort_str}"
+
+echo -e "${line1}\n${line2}"
