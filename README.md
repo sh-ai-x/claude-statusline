@@ -1,11 +1,18 @@
 # claude-statusline
 
-Custom Claude Code statusline script. Displays GitHub account, model, working directory, git branch, context usage bar, elapsed time, rate limits, language mode indicator, and reasoning effort, across two lines.
+Custom Claude Code statusline script. Displays GitHub account, model, project / worktree name, git branch, context usage bar, elapsed time, rate limits, language mode indicator, and reasoning effort, across two lines.
 
 ## Statusline format
 
+Main checkout:
 ```
 @sh-ai-x [Sonnet 4.6] my-project git:(main) ▓▓▓░░░░░░░ 30%
+⏱ 2m 14s | en:off effort:high
+```
+
+Inside a git worktree (`my-project` is the project, `feat-x` is the worktree):
+```
+@sh-ai-x [Sonnet 4.6] my-project/feat-x git:(feat-x) ▓▓▓░░░░░░░ 30%
 ⏱ 2m 14s | en:off effort:high
 ```
 
