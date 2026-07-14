@@ -13,7 +13,7 @@ Custom Claude Code statusline script. Displays GitHub account, model, working di
 |---|---|
 | `@user` | Active `gh` CLI account, read from `~/.config/gh/hosts.yml` (bright white) |
 | `[Model]` | Active Claude model (magenta) |
-| `dir` | Current working directory basename (cyan) |
+| `loc` | Project name (git repo basename); suffixed with `/<worktree>` when inside a worktree, plain dir name when not in a git repo (cyan) |
 | `git:(branch)` | Git branch; red branch name, yellow `✗` if dirty |
 | `▓▓▓░░░░░░░ N%` | Context window usage bar (green/yellow/red) |
 | `⏱ Xm Ys` | Session elapsed time |

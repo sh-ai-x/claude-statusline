@@ -7,6 +7,13 @@ gh_user=$(awk -F': *' '/^    user:/{print $2; exit}' "$HOME/.config/gh/hosts.yml
 
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd // empty')
 dir=$(basename "$cwd")
+# Repo name = main repo basename (resolves worktrees to their parent repo); fallback to dir
+git_common_dir=$(git -C "$cwd" -c gc.auto=0 rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
+if [ -n "$git_common_dir" ]; then
+  repo=$(basename "$(dirname "$git_common_dir")")
+else
+  repo="$dir"
+fi
 model=$(echo "$input" | jq -r '.model.display_name // "Claude"')
 pct=$(echo "$input" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
 duration_ms=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
@@ -85,8 +92,15 @@ account_color='\033[1;37m'
 account_str=""
 [ -n "$gh_user" ] && account_str="${account_color}@${gh_user}${reset} "
 
-# Line 1: account | model | dir | git | context bar
-line1="${account_str}${magenta}[${model}]${reset} ${cyan}${dir}${reset}${git_info} ${ctx_color}${bar}${reset} ${pct}%"
+# Display: project/repo when in a worktree; project alone at the main checkout
+if [ "$dir" != "$repo" ]; then
+  loc="${repo}/${dir}"
+else
+  loc="$repo"
+fi
+
+# Line 1: account | model | loc | git | context bar
+line1="${account_str}${magenta}[${model}]${reset} ${cyan}${loc}${reset}${git_info} ${ctx_color}${bar}${reset} ${pct}%"
 
 # Line 2: time | rate limit | en:on/off | effort
 line2="⏱ ${mins}m ${secs}s${rate_str} | ${lang_color}en:${lang_mode}${reset}${effort_str}"
