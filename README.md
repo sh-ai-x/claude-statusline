@@ -6,20 +6,20 @@ Custom Claude Code statusline script. Displays GitHub account, model, project / 
 
 Main checkout:
 ```
-@sh-ai-x [Sonnet 4.6] [my-project] git:(main) ▓▓▓░░░░░░░ 30%
-⏱ 2m 14s | en:off effort:high
+@sh-ai-x [Sonnet 4.6] [my-project] ▓▓▓░░░░░░░ 30%
+⏱ 2m 14s |  git:(main) | en:off effort:high
 ```
 
 Inside a git worktree (`my-project` is the project, `feat-x` is the worktree):
 ```
-@sh-ai-x [Sonnet 4.6] [my-project][feat-x] git:(feat-x) ▓▓▓░░░░░░░ 30%
-⏱ 2m 14s | en:off effort:high
+@sh-ai-x [Sonnet 4.6] [my-project][feat-x] ▓▓▓░░░░░░░ 30%
+⏱ 2m 14s |  git:(feat-x) | en:off effort:high
 ```
 
 Outside any git repo:
 ```
 @sh-ai-x [Sonnet 4.6] tmp ▓▓▓░░░░░░░ 30%
-⏱ 2m 14s | en:off effort:high
+⏱ 2m 14s |  en:off effort:high
 ```
 
 | Segment | Description |

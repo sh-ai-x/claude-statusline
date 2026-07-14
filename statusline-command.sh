@@ -18,6 +18,7 @@ else
 fi
 model=$(echo "$input" | jq -r '.model.display_name // "Claude"')
 pct=$(echo "$input" | jq -r '.context_window.used_percentage // 0' | cut -d. -f1)
+pct=${pct:-0}
 duration_ms=$(echo "$input" | jq -r '.cost.total_duration_ms // 0')
 rate_5h=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 rate_7d=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
@@ -105,10 +106,10 @@ else
   loc="$dir"
 fi
 
-# Line 1: account | model | loc | git | context bar
-line1="${account_str}${magenta}[${model}]${reset} ${cyan}${loc}${reset}${git_info} ${ctx_color}${bar}${reset} ${pct}%"
+# Line 1: account | model | loc | context bar
+line1="${account_str}${magenta}[${model}]${reset} ${cyan}${loc}${reset} ${ctx_color}${bar}${reset} ${pct}%"
 
-# Line 2: time | rate limit | en:on/off | effort
-line2="⏱ ${mins}m ${secs}s${rate_str} | ${lang_color}en:${lang_mode}${reset}${effort_str}"
+# Line 2: time | rate limit | git | en:on/off | effort
+line2="⏱ ${mins}m ${secs}s${rate_str} | ${git_info} | ${lang_color}en:${lang_mode}${reset}${effort_str}"
 
 echo -e "${line1}\n${line2}"
