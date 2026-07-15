@@ -47,6 +47,15 @@ else
   effort_str=""
 fi
 
+# Session id (short, first 8 hex chars of the UUID, dim-styled)
+session_id=$(echo "$input" | jq -r '.session_id // empty')
+if [ -n "$session_id" ]; then
+  session_short="${session_id:0:8}"
+  session_str=" ${dim}sid:${session_short}${reset}"
+else
+  session_str=""
+fi
+
 # Git branch
 git_branch=$(git -C "$cwd" -c gc.auto=0 symbolic-ref --short HEAD 2>/dev/null)
 git_dirty=$(git -C "$cwd" -c gc.auto=0 status --porcelain 2>/dev/null | head -1)
@@ -109,7 +118,7 @@ fi
 # Line 1: account | model | loc | context bar
 line1="${account_str}${magenta}[${model}]${reset} ${cyan}${loc}${reset} ${ctx_color}${bar}${reset} ${pct}%"
 
-# Line 2: time | rate limit | git | en:on/off | effort
-line2="⏱ ${mins}m ${secs}s${rate_str} | ${git_info} | ${lang_color}en:${lang_mode}${reset}${effort_str}"
+# Line 2: time | rate limit | git | en:on/off | effort | sid
+line2="⏱ ${mins}m ${secs}s${rate_str} | ${git_info} | ${lang_color}en:${lang_mode}${reset}${effort_str}${session_str}"
 
 echo -e "${line1}\n${line2}"
