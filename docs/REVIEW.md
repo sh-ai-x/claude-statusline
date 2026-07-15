@@ -44,7 +44,7 @@ script invoked by Claude Code on every render tick.
 | `hooks/worktree-guard.sh` | — | PreToolUse block on Edit/Write when cwd is main checkout. |
 | `hooks/task-detector.sh` | — | UserPromptSubmit nudge for new tasks in main checkout. |
 | `hooks/session-start-check.sh` | — | SessionStart reminder when started in main checkout. |
-| `scripts/validate.py` | — | 5-step install validator (extract from `ci.yml`). |
+| `scripts/validate.py` | — | 3-check install validator: `installation complete`, `ci-config marker`, `bash syntax` (extract from `ci.yml`). |
 | `scripts/test.sh` | — | Pytest wrapper; skips if no `tests/`. |
 | `scripts/ci-local.sh` | — | Local entrypoint = `validate.py` + `test.sh` + `act -l`. |
 | `tests/test_worktree_guard.py` | — | 32 regression tests for the 4 dev-kit rule hooks. |
@@ -57,9 +57,15 @@ script invoked by Claude Code on every render tick.
 2. **Three rendering modes handled gracefully** — main checkout, worktree, non-repo.
 3. **All input fields are optional.** `jq -r '.field // default'` pattern means a
    missing `rate_limits`, `effort`, `session_id` simply renders an empty segment.
-4. **CI shape is canonical.** Branch-policy warn-only on direct push, hard-block
-   via pre-push locally, validate + test on every PR, 3-dim review + 10-dim
-   security + severity gate on every PR, auto-fix loop with 5-iter cap.
+4. **CI shape is canonical, with documented exclusions.** Branch-policy
+   warn-only on direct push (job now includes `actions/checkout@v4` since
+   PR #11), hard-block via pre-push locally, validate + test on every PR,
+   3-dim review + 10-dim security + severity gate on **eligible** same-repo
+   PRs. Excluded: (a) fork PRs — secrets not exposed, no agent review;
+   (b) PRs that modify `.github/workflows/review.yml` itself — workflow-
+   validation fallback posts `Verdict: Approve` + warning and defers to
+   human review. Auto-fix loop has a 5-iter label-based cap (PR #11 also
+   hardened the cap step to `exit 1` so the agent doesn't run past it).
 5. **Worktree discipline enforced three ways:** worktree-guard hook (PreToolUse),
    pre-push hook (blocks push to main), branch-policy CI job (warn annotation).
 6. **README is concrete.** Shows actual rendered output for each mode, not
@@ -100,11 +106,14 @@ command -v jq >/dev/null || { echo "jq required — brew install jq / apt instal
 
 ### MEDIUM — `git_dirty` only inspects the first line of `git status --porcelain`
 
-[`statusline-command.sh:61`](https://github.com/sh-ai-x/claude-statusline/blob/0890770/statusline-command.sh#L61) uses `head -1` to detect dirty state, so a 5-file
-dirty tree shows the same yellow ✗ as a 1-file tree. Either show the count
-(`✗5`) or drop the count and keep the boolean — current behavior is misleading
-because it suggests "at least one dirty file" but reads like "the first dirty
-file."
+[`statusline-command.sh:61`](https://github.com/sh-ai-x/claude-statusline/blob/0890770/statusline-command.sh#L61) uses `head -1` to detect dirty state. The
+variable is then used as a **boolean sentinel** in the rendering branch
+(only its empty-vs-non-empty state matters; the actual content of the
+line is never displayed). So the previous wording ("shows the same yellow
+✗ as a 1-file tree") overstates the user-visible impact — there is no
+"count" rendered today to be inconsistent. The narrow improvement is to
+rename `git_dirty` → `git_dirty_any` so the boolean intent is clear at
+the call site.
 
 ### MEDIUM — Color codes are hardcoded literals scattered through the script
 
