@@ -1,8 +1,10 @@
 # Repository review — `sh-ai-x/claude-statusline`
 
-**Snapshot:** `origin/main` @ `0890770` (post PR #9 — ci-setup refresh to dev-kit 0.3.34).
+**Snapshot:** `origin/main` @ [`0890770`](https://github.com/sh-ai-x/claude-statusline/commit/0890770) (post PR #9 — ci-setup refresh to dev-kit 0.3.34).
 **Date:** 2026-07-16.
 **Scope:** code, docs, CI, hooks, security, observability. Not a performance review.
+
+**Validity:** This doc is a **regenerable advisory snapshot** anchored to commit `0890770`. It is NOT a permanent architectural record. When the repo state changes meaningfully (new merge to `main`, dev-kit upgrade, workflow shape change), regenerate this doc from the new tip. Do NOT patch findings in place — findings are a point-in-time audit and go stale fast. The durable parts of the repo's architectural intent are captured by `README.md`, `.claude/rules/git-workflow.md`, and the workflow files themselves, NOT by this doc.
 
 ---
 
@@ -37,7 +39,7 @@ script invoked by Claude Code on every render tick.
 | `.github/workflows/ci.yml` | — | branch-policy warn + validate + test on PRs. |
 | `.github/workflows/review.yml` | — | `/dev-kit:review` (3-dim) + `/dev-kit:security` (10-dim) + severity gate. |
 | `.github/workflows/auto-fix-pr.yml` | — | Self-loop LLM auto-fix on `changes_requested`. |
-| `.github/ci-review-provider.txt` | 1 | One-key config (`CI_REVIEW_PROVIDER=deepseek`). Read by `review.yml`. |
+| `.github/ci-review-provider.txt` | 1 | One-key config file (`CI_REVIEW_PROVIDER=deepseek`). **Dead config — not referenced anywhere** in `.github/`, `scripts/`, or `hooks/`. `review.yml` defines its own `review_provider` workflow_dispatch input with a `minimax` default. Likely a leftover from PR #8's deepseek-integration exploration that was never wired. |
 | `.githooks/pre-push` | — | **Hard** block: refuses `git push` to `main`. |
 | `hooks/worktree-guard.sh` | — | PreToolUse block on Edit/Write when cwd is main checkout. |
 | `hooks/task-detector.sh` | — | UserPromptSubmit nudge for new tasks in main checkout. |
@@ -98,7 +100,7 @@ command -v jq >/dev/null || { echo "jq required — brew install jq / apt instal
 
 ### MEDIUM — `git_dirty` only inspects the first line of `git status --porcelain`
 
-`statusline-command.sh:61` uses `head -1` to detect dirty state, so a 5-file
+[`statusline-command.sh:61`](https://github.com/sh-ai-x/claude-statusline/blob/0890770/statusline-command.sh#L61) uses `head -1` to detect dirty state, so a 5-file
 dirty tree shows the same yellow ✗ as a 1-file tree. Either show the count
 (`✗5`) or drop the count and keep the boolean — current behavior is misleading
 because it suggests "at least one dirty file" but reads like "the first dirty
@@ -106,7 +108,7 @@ file."
 
 ### MEDIUM — Color codes are hardcoded literals scattered through the script
 
-`statusline-command.sh` has 13 `\033[…m` literals inline. Adding a dark-mode
+`statusline-command.sh` has **15** `\033[…m` literals inline (`grep -oE '\\033\[[0-9;]*m' statusline-command.sh | wc -l` → `15`). Adding a dark-mode
 override or per-host color theming requires touching the script. Worth
 extracting to a small associative array at the top:
 
@@ -178,6 +180,12 @@ templates, not runtime config. Reads cleanly today but if more provider
 switches show up (model name, max-iter cap, …), consider moving to
 `.github/review-config.env` or inlining into `review.yml`'s `env:` block.
 
+**Verification (2026-07-16):** `grep -rn "ci-review-provider\|review_provider\|REVIEW_PROVIDER" .` returns only `review.yml` lines that reference the
+**separate** `workflow_dispatch` input variable named `review_provider`. The
+`.txt` file itself is unreferenced. Two valid resolutions: (a) delete the
+file, or (b) wire it as a `pull_request`-time provider override (would
+require a workflow file change to source it).
+
 ### INFO — `effort` color map has a duplicate
 
 `statusline-command.sh:40-41` maps both `high` and `xhigh` to `\033[1;33m`
@@ -197,7 +205,7 @@ Cross-reference: see MEDIUM finding above. The behavior is "any-dirty" not
 | Area | Status |
 |---|---|
 | Secrets in repo | ✅ None found. |
-| Workflow permissions | ✅ All workflows use default `GITHUB_TOKEN`. No `permissions:` overrides. |
+| Workflow permissions | ⚠️ `review.yml` and `auto-fix-pr.yml` declare explicit `permissions:` overrides — `contents: read`, `pull-requests: write`, `issues: write`, `id-token: write` (review.yml jobs) and similar (auto-fix-pr.yml). This is **required** for the LLM-review OIDC token exchange and for posting PR comments. `ci.yml` uses defaults. Not a vulnerability — minimum-privilege is correctly scoped — but the table previously misclaimed "no overrides". |
 | OIDC / token exchange | ⚠️ `review.yml` uses `pull_request` because OIDC doesn't federate on `pull_request_target` for consumer repos. Documented in workflow. |
 | `actions/checkout` pin | ⚠️ Pinned to `@v4` — fine for now, but `@v4` is on a deprecation path. Recommend tracking `@v5` when it stabilizes for this repo. |
 | Auto-fix loop | ✅ 5-iteration cap. Skips reviews from `claude[bot]` / `github-actions`. Skips fork PRs (no secret exposure). |
@@ -236,6 +244,11 @@ fi
 5. **(LOW)** Add a `VERSION` line + `CHANGELOG.md` + tag-on-merge.
 6. **(LOW)** Add `--depth 1 --branch vX.Y.Z` install snippet to README.
 7. **(INFO)** Add a one-line `CLAUDE_STATUSLINE_DRY_RUN=1` debug mode.
+8. **(META)** Per the Validity line at top — when a meaningful change lands
+   on `main` (new merge, dev-kit upgrade, workflow shape change), **regenerate**
+   this doc from the new tip via a fresh `chore/repo-analysis` worktree.
+   Do not patch findings in place. Treat this file as a point-in-time audit
+   artifact, not a maintained design document.
 
 ---
 
