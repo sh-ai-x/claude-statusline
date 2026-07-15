@@ -4,6 +4,23 @@ Custom Claude Code statusline script. Displays GitHub account, model, project / 
 
 ## Statusline format
 
+### Segments
+
+| Line | Segment | Description |
+|---|---|---|
+| 1 | `@user` | Active `gh` CLI account, read from `~/.config/gh/hosts.yml` (bold white). Hidden when `gh` is not configured. |
+| 1 | `[Model]` | Active Claude model (magenta) |
+| 1 | `[project]` or `[project][worktree]` | Project name (git repo basename); `[project][worktree]` inside a worktree, plain dir name when not in a git repo (cyan) |
+| 1 | `▓▓▓░░░░░░░ N%` | Context window usage bar — green <70%, yellow 70–89%, red ≥90% |
+| 2 | `⏱ Xm Ys` | Session elapsed time |
+| 2 | `5h: N% \| 7d: N%` | 5-hour and 7-day rate limit usage. Each segment is shown only when its data is available from the Claude Code input. |
+| 2 | `git:(branch)` | Current branch (blue, with red branch name). Appended `✗` (yellow) when the working tree is dirty. |
+| 2 | `en:on\|off` | Language mode indicator — yellow. Reads `~/.claude/.lang-mode`; defaults to `off`. See [claude-lang-mode](https://github.com/sh-ai-x/claude-lang-mode). |
+| 2 | `effort:X` | Reasoning effort level. Color-coded by intensity: `low` (dim white), `medium` (cyan), `high`/`xhigh` (yellow), `max` (magenta). Omitted when not set. |
+| 2 | `sid:xxxxxxxx` | First 8 hex chars of the current session UUID (bold white). Omitted when the input has no `session_id`. Useful for matching a statusline row to a `/resume` candidate or a log entry. |
+
+### Examples
+
 Main checkout:
 ```
 @sh-ai-x [Sonnet 4.6] [my-project] ▓▓▓░░░░░░░ 30%
@@ -22,26 +39,11 @@ Dirty worktree (yellow `✗` after the branch name):
 ⏱ 2m 14s |  git:(feat-x) ✗ | en:off effort:high sid:a1b2c3d4
 ```
 
-Outside any git repo:
+Outside any git repo — note the empty slot between the two `|` separators, since the format string always emits both:
 ```
 @sh-ai-x [Sonnet 4.6] tmp ▓▓▓░░░░░░░ 30%
-⏱ 2m 14s |  en:off effort:high sid:a1b2c3d4
+⏱ 2m 14s |  | en:off effort:high sid:a1b2c3d4
 ```
-
-### Segments
-
-| Segment | Description |
-|---|---|
-| `@user` | Active `gh` CLI account, read from `~/.config/gh/hosts.yml` (bold white). Hidden when `gh` is not configured. |
-| `[Model]` | Active Claude model (magenta) |
-| `[project]` or `[project][worktree]` | Project name (git repo basename); `[project][worktree]` inside a worktree, plain dir name when not in a git repo (cyan) |
-| `▓▓▓░░░░░░░ N%` | Context window usage bar — green <70%, yellow 70–89%, red ≥90% |
-| `⏱ Xm Ys` | Session elapsed time |
-| `5h: N% \| 7d: N%` | 5-hour and 7-day rate limit usage. Each segment is shown only when its data is available from the Claude Code input. |
-| `git:(branch)` | Current branch (blue, with red branch name). Appended `✗` (yellow) when the working tree is dirty. |
-| `en:on\|off` | Language mode indicator — yellow. Reads `~/.claude/.lang-mode`; defaults to `off`. See [claude-lang-mode](https://github.com/sh-ai-x/claude-lang-mode). |
-| `effort:X` | Reasoning effort level. Color-coded by intensity: `low` (dim), `medium` (cyan), `high`/`xhigh` (yellow), `max` (magenta). Omitted when not set. |
-| `sid:xxxxxxxx` | First 8 hex chars of the current session UUID (bold white). Omitted when the input has no `session_id`. Useful for matching a statusline row to a `/resume` candidate or a log entry. |
 
 ### Line 2 ordering
 
@@ -57,7 +59,10 @@ bash install.sh
 
 `install.sh` copies `statusline-command.sh` to `~/.claude/statusline-command.sh` and patches `~/.claude/settings.json` to wire the statusline command. Restart Claude Code afterward.
 
-Requirements: `jq`, `git`, and `python3` in `PATH` (the installer uses `python3` to merge the `statusLine` key into `settings.json`).
+Dependencies:
+
+- **Installer (`install.sh`)** requires `python3` in `PATH` (used to merge the `statusLine` key into `settings.json`).
+- **Statusline script (`statusline-command.sh`)** requires `jq` and `git` in `PATH` at runtime, when Claude Code invokes the statusline.
 
 ## Language mode indicator
 
