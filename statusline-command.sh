@@ -51,7 +51,7 @@ fi
 session_id=$(echo "$input" | jq -r '.session_id // empty')
 if [ -n "$session_id" ]; then
   session_short="${session_id:0:8}"
-  session_str=" ${dim}sid:${session_short}${reset}"
+  session_str=" \033[1;37msid:${session_short}${reset}"
 else
   session_str=""
 fi
