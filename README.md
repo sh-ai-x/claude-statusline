@@ -112,3 +112,5 @@ cd .claude/worktrees/<slug>
 git push -u origin fix/<slug>
 gh pr create --base main
 ```
+
+<!-- ci-verify-marker: 2026-07-16 — throwaway marker to exercise validate + test + review + security on merged templates; safe to remove. -->
