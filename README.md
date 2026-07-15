@@ -1,38 +1,51 @@
 # claude-statusline
 
-Custom Claude Code statusline script. Displays GitHub account, model, project / worktree name, git branch, context usage bar, elapsed time, rate limits, language mode indicator, and reasoning effort, across two lines.
+Custom Claude Code statusline script. Displays GitHub account, model, project / worktree name, git branch, context usage bar, elapsed time, rate limits, language mode indicator, reasoning effort, and a short session ID, across two lines.
 
 ## Statusline format
 
 Main checkout:
 ```
 @sh-ai-x [Sonnet 4.6] [my-project] ▓▓▓░░░░░░░ 30%
-⏱ 2m 14s |  git:(main) | en:off effort:high
+⏱ 2m 14s | 5h: 12% | 7d: 4% | git:(main) | en:off effort:high sid:a1b2c3d4
 ```
 
 Inside a git worktree (`my-project` is the project, `feat-x` is the worktree):
 ```
 @sh-ai-x [Sonnet 4.6] [my-project][feat-x] ▓▓▓░░░░░░░ 30%
-⏱ 2m 14s |  git:(feat-x) | en:off effort:high
+⏱ 2m 14s | 5h: 12% | 7d: 4% | git:(feat-x) | en:off effort:high sid:a1b2c3d4
+```
+
+Dirty worktree (yellow `✗` after the branch name):
+```
+@sh-ai-x [Sonnet 4.6] [my-project][feat-x] ▓▓▓░░░░░░░ 30%
+⏱ 2m 14s |  git:(feat-x) ✗ | en:off effort:high sid:a1b2c3d4
 ```
 
 Outside any git repo:
 ```
 @sh-ai-x [Sonnet 4.6] tmp ▓▓▓░░░░░░░ 30%
-⏱ 2m 14s |  en:off effort:high
+⏱ 2m 14s |  en:off effort:high sid:a1b2c3d4
 ```
+
+### Segments
 
 | Segment | Description |
 |---|---|
-| `@user` | Active `gh` CLI account, read from `~/.config/gh/hosts.yml` (bright white) |
+| `@user` | Active `gh` CLI account, read from `~/.config/gh/hosts.yml` (bold white). Hidden when `gh` is not configured. |
 | `[Model]` | Active Claude model (magenta) |
 | `[project]` or `[project][worktree]` | Project name (git repo basename); `[project][worktree]` inside a worktree, plain dir name when not in a git repo (cyan) |
-| `git:(branch)` | Git branch; red branch name, yellow `✗` if dirty |
-| `▓▓▓░░░░░░░ N%` | Context window usage bar (green/yellow/red) |
+| `▓▓▓░░░░░░░ N%` | Context window usage bar — green <70%, yellow 70–89%, red ≥90% |
 | `⏱ Xm Ys` | Session elapsed time |
-| `5h: N% \| 7d: N%` | Rate limit usage (when available) |
-| `en:on\|off` | Language mode indicator — yellow (requires [claude-lang-mode](https://github.com/sh-ai-x/claude-lang-mode)) |
-| `effort:X` | Reasoning effort level (when set) |
+| `5h: N% \| 7d: N%` | 5-hour and 7-day rate limit usage. Each segment is shown only when its data is available from the Claude Code input. |
+| `git:(branch)` | Current branch (blue, with red branch name). Appended `✗` (yellow) when the working tree is dirty. |
+| `en:on\|off` | Language mode indicator — yellow. Reads `~/.claude/.lang-mode`; defaults to `off`. See [claude-lang-mode](https://github.com/sh-ai-x/claude-lang-mode). |
+| `effort:X` | Reasoning effort level. Color-coded by intensity: `low` (dim), `medium` (cyan), `high`/`xhigh` (yellow), `max` (magenta). Omitted when not set. |
+| `sid:xxxxxxxx` | First 8 hex chars of the current session UUID (bold white). Omitted when the input has no `session_id`. Useful for matching a statusline row to a `/resume` candidate or a log entry. |
+
+### Line 2 ordering
+
+`⏱` time → optional rate segments → `git:(branch)` → `en:on/off` → optional `effort:X` → optional `sid:xxxxxxxx`. Pipe-separated except for the trailing `effort` and `sid`, which are space-separated to keep them visually grouped as terminal-side metadata.
 
 ## Install
 
@@ -42,7 +55,9 @@ cd claude-statusline
 bash install.sh
 ```
 
-Requires `jq` and `git` in PATH.
+`install.sh` copies `statusline-command.sh` to `~/.claude/statusline-command.sh` and patches `~/.claude/settings.json` to wire the statusline command. Restart Claude Code afterward.
+
+Requirements: `jq`, `git`, and `python3` in `PATH` (the installer uses `python3` to merge the `statusLine` key into `settings.json`).
 
 ## Language mode indicator
 
@@ -50,7 +65,7 @@ The `en:on` / `en:off` segment reads from `~/.claude/.lang-mode`. Install [claud
 
 ## Settings reference
 
-`~/.claude/settings.json`:
+`install.sh` writes the following entry into `~/.claude/settings.json`. You only need to touch this manually if you skipped the installer:
 
 ```json
 {
