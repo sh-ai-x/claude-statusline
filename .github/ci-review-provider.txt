@@ -1,1 +1,1 @@
-CI_REVIEW_PROVIDER=deepseek
+CI_REVIEW_PROVIDER=minimax
