@@ -16,6 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
+      # Required: branch-policy.sh lives in the repo; without checkout the
+      # step errors out with "file not found" before the warning can fire.
+      # Regression note: ci-setup --force overwrites this file from the
+      # upstream template, which does NOT include the checkout. PR #11
+      # security review caught the regression; this step keeps it pinned.
+      - uses: actions/checkout@v4
       - name: Direct push to main — policy violation recorded
         run: bash scripts/branch-policy.sh
 
