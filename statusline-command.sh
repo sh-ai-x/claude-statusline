@@ -1,4 +1,7 @@
 #!/bin/bash
+# Prefer a jq.exe vendored next to this script (see install.sh) over PATH,
+# so Windows installs don't depend on PATH/winget refresh timing.
+export PATH="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd):$PATH"
 input=$(cat)
 
 lang_mode=$(cat "$HOME/.claude/.lang-mode" 2>/dev/null || echo "off")
